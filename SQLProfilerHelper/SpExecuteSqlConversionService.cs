@@ -78,6 +78,13 @@ namespace SQLProfilerHelper
                                 i += 3;
                                 continue;
                             }
+                            if (SPExecuteSQLInput[i + 1] == currentChar)
+                            {
+                                // COALESCE([T].[c], ''0001-01-01T00:00:00.000'') AS [Coalesce] case
+                                buffer.Append('\'');
+                                i += 1;
+                                continue;
+                            }
                             parserState = State.VariablesDecls;
                         }
                         else
