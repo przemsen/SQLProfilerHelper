@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace SQLProfilerHelper
 {
@@ -9,6 +10,7 @@ namespace SQLProfilerHelper
         public string SPExecuteSQLInput { get; set; }
         public string SQLOutput { get; set; }
         private const int BUFFER_SIZE = 80000;
+        private static Regex dateRegex = new Regex(@"\d{4}-\d{2}-\d{2}", RegexOptions.Compiled);
 
         public enum State
         {
@@ -149,7 +151,6 @@ namespace SQLProfilerHelper
                         {
                             parserState = State.VariableValue;
                         }
-
                         break;
 
                     case State.VariableValue:
@@ -177,16 +178,12 @@ namespace SQLProfilerHelper
                             variableValueBuffer.Append(currentChar);
                             if (i == SPExecuteSQLInput.Length - 1)
                             {
-                                variablesValuesDictionary[variableNameBuffer.ToString()] = variableValueBuffer.ToString();
+                                variablesValuesDictionary[variableNameBuffer.ToString()] = ApplyExtraTransforms(variableValueBuffer.ToString());
                             }
                         }
                         else if (currentChar == ',')
                         {
-                            var variableValue = variableValueBuffer.ToString();
-                            if (variableValue.Contains(" 00:00:00'"))
-                            {
-                                variableValue = variableValue.Replace(" 00:00:00", string.Empty);
-                            }
+                            var variableValue = ApplyExtraTransforms(variableValueBuffer.ToString());
                             variablesValuesDictionary[variableNameBuffer.ToString()] = variableValue;
                             variableValueBuffer.Clear();
                             variableNameBuffer.Clear();
@@ -195,7 +192,7 @@ namespace SQLProfilerHelper
                         }
                         else if (currentChar == '\r' && i == SPExecuteSQLInput.Length - 2)
                         {
-                            variablesValuesDictionary[variableNameBuffer.ToString()] = variableValueBuffer.ToString();
+                            variablesValuesDictionary[variableNameBuffer.ToString()] = ApplyExtraTransforms(variableValueBuffer.ToString());
                             break;
                         }
 
@@ -211,6 +208,16 @@ namespace SQLProfilerHelper
                 SQLOutput = SQLOutput.Replace(k, variablesValuesDictionary[k]);
             }
 
+        }
+
+        private string ApplyExtraTransforms(string variableValue)
+        {
+            var dateMatch = dateRegex.Match(variableValue);
+            if (dateMatch.Success)
+            {
+                return $"'{dateMatch.Captures[0].Value}'";
+            }
+            return variableValue;
         }
 
     }
