@@ -27,7 +27,7 @@ namespace SQLProfilerHelper
 
             void AppendIndent()
             {
-                for(int i = 0; i < 2 * indentCount; ++i)
+                for (int i = 0; i < 2 * indentCount; ++i)
                 {
                     buffer.Append(' ');
                 }
@@ -47,6 +47,9 @@ namespace SQLProfilerHelper
             var parserState = State.BeginningAndSqlBody;
             var variablesValuesDictionary = new Dictionary<string, string>();
             var quoteCounterInVariableDecls = 0;
+
+            SPExecuteSQLInput = ClearLastGo(SPExecuteSQLInput);
+
 
             for (int i = 0; i < SPExecuteSQLInput.Length; i++)
             {
@@ -220,6 +223,23 @@ namespace SQLProfilerHelper
             return variableValue;
         }
 
+        private string ClearLastGo(string input)
+        {
+            string trimmedInput = input.Trim();
+            string last4Chars = "";
+
+            for (int i = trimmedInput.Length - 4; i <= trimmedInput.Length - 1; i++)
+            {
+                last4Chars = last4Chars + trimmedInput[i];
+            }
+
+            if (last4Chars.ToLower() == "\r\ngo")
+            {
+                trimmedInput = trimmedInput.Remove(trimmedInput.Length - 4);
+            }
+            
+            return trimmedInput;
+        }
     }
 
     //////////////////////////////////////////////////////////////////////////////
