@@ -165,26 +165,16 @@ namespace SQLProfilerHelper
 
                         if (currentChar == '\'')
                         {
-                            isInsideStringValue = !isInsideStringValue;
-                        }
-
-                        if (
-                            (
-                                currentChar != ','
-                                && !(previousChar != '\r' && currentChar == '\r')
-                                && !(previousChar == '\r' && currentChar == '\n')
-                                && currentChar != ' '
-                            ) ||
-                            (currentChar == ' ' && isInsideStringValue)
-                        )
-                        {
                             variableValueBuffer.Append(currentChar);
                             if (i == SPExecuteSQLInput.Length - 1)
                             {
                                 variablesValuesDictionary[variableNameBuffer.ToString()] = ApplyExtraTransforms(variableValueBuffer.ToString());
                             }
+                            isInsideStringValue = !isInsideStringValue;
+                            break;
                         }
-                        else if (currentChar == ',')
+
+                        if (currentChar == ',' && !isInsideStringValue)
                         {
                             var variableValue = ApplyExtraTransforms(variableValueBuffer.ToString());
                             variablesValuesDictionary[variableNameBuffer.ToString()] = variableValue;
@@ -192,6 +182,18 @@ namespace SQLProfilerHelper
                             variableNameBuffer.Clear();
                             parserState = State.VariablesAssign;
                             isInsideVariableName = false;
+                        }
+                        else if
+                        (
+                             !(previousChar != '\r' && currentChar == '\r')
+                          && !(previousChar == '\r' && currentChar == '\n')
+                        )
+                        {
+                            variableValueBuffer.Append(currentChar);
+                            if (i == SPExecuteSQLInput.Length - 1)
+                            {
+                                variablesValuesDictionary[variableNameBuffer.ToString()] = ApplyExtraTransforms(variableValueBuffer.ToString());
+                            }
                         }
                         else if (currentChar == '\r' && i == SPExecuteSQLInput.Length - 2)
                         {
@@ -237,7 +239,7 @@ namespace SQLProfilerHelper
             {
                 trimmedInput = trimmedInput.Remove(trimmedInput.Length - 4);
             }
-            
+
             return trimmedInput;
         }
     }
